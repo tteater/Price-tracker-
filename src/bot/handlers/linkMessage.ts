@@ -18,9 +18,16 @@ export async function linkMessageHandler(ctx: Context): Promise<void> {
 
     const messageText = ctx.message.text;
     if (typeof messageText !== 'string') return;
+    if (messageText.trim().startsWith('/')) return;
+
+    console.log('[LinkHandler] Incoming text:', messageText.slice(0, 220));
     const extractedUrl = extractFirstUrl(messageText);
 
-    if (!extractedUrl) return;
+    if (!extractedUrl) {
+      console.log('[LinkHandler] No URL extracted');
+      return;
+    }
+    console.log('[LinkHandler] URL extracted:', extractedUrl);
     const resolvedUrl = await resolveFinalUrl(extractedUrl);
     let trackUrl = resolvedUrl;
 
@@ -36,6 +43,7 @@ export async function linkMessageHandler(ctx: Context): Promise<void> {
     }
 
     if (!isSupportedPlatform(trackUrl)) {
+      console.log('[LinkHandler] Unsupported platform URL:', trackUrl);
       await ctx.reply(
         '🤔 I only track shopping links right now.\nSupported: Amazon, Flipkart, Meesho, Myntra, AJIO, Snapdeal'
       );
@@ -78,10 +86,12 @@ export async function linkMessageHandler(ctx: Context): Promise<void> {
       scrapeProductPrice(trackUrl),
       convertToAffiliateLink(trackUrl)
     ]);
+    console.log('[LinkHandler] Scrape result:', scrapeResult, 'platform:', platformSafe(trackUrl));
 
     if (scrapeResult.price == null) {
       // One immediate retry helps for temporary anti-bot/interstitial pages.
       scrapeResult = await scrapeProductPrice(trackUrl);
+      console.log('[LinkHandler] Scrape retry result:', scrapeResult);
     }
 
     const platform = detectPlatform(trackUrl);
@@ -120,6 +130,7 @@ export async function linkMessageHandler(ctx: Context): Promise<void> {
       return;
     }
 
+    console.log('[LinkHandler] Tracking created:', created.id);
     await ctx.api.editMessageText(
       ctx.chat!.id,
       ack.message_id,
@@ -133,5 +144,13 @@ export async function linkMessageHandler(ctx: Context): Promise<void> {
   } catch (error) {
     console.error('linkMessageHandler failed:', error);
     await ctx.reply('⚠️ Something went wrong while tracking this link. Please try again in a moment.');
+  }
+}
+
+function platformSafe(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'invalid-host';
   }
 }
