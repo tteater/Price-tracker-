@@ -1,10 +1,10 @@
 FROM node:20-bullseye-slim
 
+# Set working directory
 WORKDIR /app
 
-# Fix unstable mirror + reduce size + avoid failures
-RUN sed -i 's/deb.debian.org/ftp.debian.org/g' /etc/apt/sources.list && \
-    apt-get update && \
+# Install system dependencies (stable + retry fix)
+RUN apt-get update --fix-missing -o Acquire::Retries=3 && \
     apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
@@ -12,14 +12,19 @@ RUN sed -i 's/deb.debian.org/ftp.debian.org/g' /etc/apt/sources.list && \
         openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node deps first (better caching)
+# Copy package files first (better caching)
 COPY package*.json ./
+
+# Install Node dependencies
 RUN npm ci
 
-# Copy rest of app
+# Copy rest of the code
 COPY . .
 
-# Python deps (optimized)
+# Environment (override in Railway)
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
+# Install Python dependencies
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir \
         requests \
@@ -27,12 +32,11 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip && \
         scrapling \
         curl_cffi
 
-# Prisma
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+# Generate Prisma client
 RUN npx prisma generate
 
-# Build
+# Build app
 RUN npm run build
 
-# Start
+# Start app (with DB sync)
 CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
