@@ -1,0 +1,33 @@
+{
+  "name": "pricehawk-bot",
+  "version": "1.0.0",
+  "description": "Telegram price tracking and alert bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "axios": "^1.7.7",
+    "beautifulsoup4": "^0.0.1-security",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.30.0",
+    "node-cron": "^3.0.3",
+    "requests": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "@types/node-cron": "^3.0.11",
+    "prisma": "^5.20.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}

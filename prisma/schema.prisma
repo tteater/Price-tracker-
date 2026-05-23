@@ -1,0 +1,42 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         String    @id @default(cuid())
+  telegramId String    @unique
+  username   String?
+  firstName  String?
+  createdAt  DateTime  @default(now())
+  products   Product[]
+}
+
+model Product {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  originalUrl     String
+  affiliateUrl    String
+  productName     String?
+  currentPrice    Float?
+  lastAlertPrice  Float?
+  alertThreshold  Float        @default(2.0)
+  platform        String
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  priceHistory    PricePoint[]
+}
+
+model PricePoint {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  price      Float
+  recordedAt DateTime @default(now())
+}
