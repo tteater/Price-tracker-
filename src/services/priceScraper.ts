@@ -106,6 +106,20 @@ async function scrapeFlipkart(url: string): Promise<ScrapeResult> {
   const metaPick = { name: ogTitle, price: parsePrice(descPriceMatch?.[1] ?? null) };
   if (metaPick.name || metaPick.price) return metaPick;
 
+  const scriptPriceMatches = [
+    html.match(/"finalPrice"\s*:\s*\{\s*"value"\s*:\s*([0-9]+(?:\.[0-9]+)?)/i)?.[1],
+    html.match(/"sellingPrice"\s*:\s*\{\s*"amount"\s*:\s*([0-9]+(?:\.[0-9]+)?)/i)?.[1],
+    html.match(/"price"\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*"priceCurrency"\s*:\s*"INR"/i)?.[1],
+    html.match(/"currentPrice"\s*:\s*([0-9]+(?:\.[0-9]+)?)/i)?.[1]
+  ].filter(Boolean) as string[];
+
+  for (const raw of scriptPriceMatches) {
+    const parsed = parsePrice(raw);
+    if (parsed != null) {
+      return { name: ogTitle, price: parsed };
+    }
+  }
+
   return genericFallback(html);
 }
 
