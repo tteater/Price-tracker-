@@ -6,6 +6,7 @@ import { registerAlerterBot } from './services/alerter';
 async function bootstrap(): Promise<void> {
   registerAlerterBot(bot);
   startPriceCheckerJob();
+  await bot.api.deleteWebhook({ drop_pending_updates: true });
   await bot.start();
   console.log('PriceHawk bot started successfully');
 }
